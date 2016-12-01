@@ -23,55 +23,55 @@ import javassist.CtNewMethod;
  */
 public class UnitFqnTagger implements ClassFileTransformer {
 
-    private ClassPool pool;
+	private ClassPool pool;
 
-    public UnitFqnTagger() {
-        pool = ClassPool.getDefault();
-    }
+	public UnitFqnTagger() {
+		pool = ClassPool.getDefault();
+	}
 
-    @Override
-    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer)
-            throws IllegalClassFormatException {
-        if (className.equals("soot/SootMethod")) {
-            try {
-                pool.insertClassPath(new ByteArrayClassPath(className, classfileBuffer));
-                CtClass cclass = pool.get(className.replaceAll("/", "."));
+	@Override
+	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer)
+			throws IllegalClassFormatException {
+		if (className.equals("soot/SootMethod")) {
+			try {
+				pool.insertClassPath(new ByteArrayClassPath(className, classfileBuffer));
+				CtClass cclass = pool.get(className.replaceAll("/", "."));
 
-                // create a FqnTag class, which can be used to tag the unit with the FQN string
-                CtClass fqnTag = pool.makeClass("FqnTag");
-                fqnTag.setInterfaces(new CtClass[] {pool.get("soot.tagkit.Tag")});
-                fqnTag.addField(new CtField(pool.get("java.lang.String"), "fqn", fqnTag));
-                fqnTag.addConstructor(CtNewConstructor.make("public FqnTag(String fqn) { this.fqn = fqn; }", fqnTag));
-                fqnTag.addMethod(CtNewMethod.make("public String getName() { return \"Fully Qualified Name\"; }", fqnTag));
-                fqnTag.addMethod(CtNewMethod.make("public byte[] getValue() throws soot.tagkit.AttributeValueException { return fqn.getBytes(); }", fqnTag));
-                fqnTag.toClass();
+				// create a FqnTag class, which can be used to tag the unit with the FQN string
+				CtClass fqnTag = pool.makeClass("FqnTag");
+				fqnTag.setInterfaces(new CtClass[] {pool.get("soot.tagkit.Tag")});
+				fqnTag.addField(new CtField(pool.get("java.lang.String"), "fqn", fqnTag));
+				fqnTag.addConstructor(CtNewConstructor.make("public FqnTag(String fqn) { this.fqn = fqn; }", fqnTag));
+				fqnTag.addMethod(CtNewMethod.make("public String getName() { return \"Fully Qualified Name\"; }", fqnTag));
+				fqnTag.addMethod(CtNewMethod.make("public byte[] getValue() throws soot.tagkit.AttributeValueException { return fqn.getBytes(); }", fqnTag));
+				fqnTag.toClass();
 
-                // add a method to add an FqnTag to a unit
-                CtMethod addFqn = CtNewMethod.make("public void addFqn(soot.Unit unit) { unit.addTag(new FqnTag(getDeclaringClass().getName() + \".\" + getName() + \".\" + unit.toString())); }", cclass);
-                cclass.addMethod(addFqn);
+				// add a method to add an FqnTag to a unit
+				CtMethod addFqn = CtNewMethod.make("public void addFqn(soot.Unit unit) { unit.addTag(new FqnTag(getDeclaringClass().getName() + \".\" + getName() + \".\" + unit.toString())); }", cclass);
+				cclass.addMethod(addFqn);
 
-                // add while loop to the end of setActiveBody, which iterates over the units of the body and adds a FqnTag
-                CtMethod method = cclass.getDeclaredMethod("setActiveBody");
-                method.addLocalVariable("it", pool.get("java.util.Iterator"));
-                method.insertAfter("it = $1.getUnits().iterator();");
-                method.insertAfter("while(it.hasNext()) { addFqn((soot.Unit)it.next()); }");
-                // TODO we could add the index (line number) in the current method to the FQN to make it really unique. At the moment
-                // two units with the same String representation in the same method would have the same FQN (name conflict)
+				// add while loop to the end of setActiveBody, which iterates over the units of the body and adds a FqnTag
+				CtMethod method = cclass.getDeclaredMethod("setActiveBody");
+				method.addLocalVariable("it", pool.get("java.util.Iterator"));
+				method.insertAfter("it = $1.getUnits().iterator();");
+				method.insertAfter("while(it.hasNext()) { addFqn((soot.Unit)it.next()); }");
+				// TODO we could add the index (line number) in the current method to the FQN to make it really unique. At the moment
+				// two units with the same String representation in the same method would have the same FQN (name conflict)
 
 
-                if (!cclass.isFrozen()) {
-                    return cclass.toBytecode();
-                } else {
-                    throw new RuntimeException("Class is frozen");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+				if (!cclass.isFrozen()) {
+					return cclass.toBytecode();
+				} else {
+					throw new RuntimeException(className + " is frozen");
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
-            return null;
-        } else {
-            // no transformation
-            return null;
-        }
-    }
+			return null;
+		} else {
+			// no transformation
+			return null;
+		}
+	}
 }
