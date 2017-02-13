@@ -38,6 +38,8 @@ public class MonitorClient {
 						String msg = queue.take();
 						writer.println(msg);
 						writer.flush();
+					} catch (InterruptedException e) {
+						// fine, we silently stop sending results
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -45,7 +47,6 @@ public class MonitorClient {
 			}
 		};
 		sendThread.setName("MonitorClient Async Message Dispatcher");
-		sendThread.setDaemon(true);
 		sendThread.start();
 	}
 
@@ -58,6 +59,9 @@ public class MonitorClient {
 	}
 
 	public void close() throws IOException {
+		// FIXME ?!? if the queue is not empty, we might loose some results,
+		// because they are not sent. we might have to think about a better
+		// solution to close the client
 		running = false;
 		sendThread.interrupt();
 		writer.flush();
