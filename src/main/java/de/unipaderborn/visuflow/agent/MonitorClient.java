@@ -1,8 +1,8 @@
 package de.unipaderborn.visuflow.agent;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.BlockingQueue;
@@ -13,8 +13,8 @@ public class MonitorClient {
 	private static MonitorClient instance = new MonitorClient();
 	private Socket socket;
 	private OutputStream out;
-	private PrintWriter writer;
-	private BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+	private DataOutputStream writer;
+	private BlockingQueue<String[]> queue = new LinkedBlockingQueue<>();
 	private Thread sendThread;
 	boolean running = true;
 
@@ -26,7 +26,7 @@ public class MonitorClient {
 	public void connect() throws UnknownHostException, IOException {
 		socket = new Socket("localhost", 6543);
 		out = socket.getOutputStream();
-		writer = new PrintWriter(out);
+		writer = new DataOutputStream(out);
 	}
 
 	public void start() {
@@ -35,8 +35,10 @@ public class MonitorClient {
 			public void run() {
 				while(running) {
 					try {
-						String msg = queue.take();
-						writer.println(msg);
+						String[] msg = queue.take();
+						writer.writeUTF(msg[0]); // fqn
+						writer.writeUTF(msg[1]); // inset
+						writer.writeUTF(msg[2]); // outset
 						writer.flush();
 					} catch (InterruptedException e) {
 						// fine, we silently stop sending results
@@ -50,11 +52,17 @@ public class MonitorClient {
 		sendThread.start();
 	}
 
-	public void send(String msg) throws IOException {
-		writer.println(msg);
+	public void send(String[] msg) throws IOException {
+		writer.writeUTF(msg[0]); // fqn
+		writer.writeUTF(msg[1]); // inset
+		writer.writeUTF(msg[2]); // outset
 	}
 
-	public void sendAsync(String msg) throws IOException, InterruptedException {
+	public void sendAsync(String fqn, String inset, String outset) throws IOException, InterruptedException {
+		String[] msg = new String[3];
+		msg[0] = fqn;
+		msg[1] = inset;
+		msg[2] = outset;
 		queue.put(msg);
 	}
 

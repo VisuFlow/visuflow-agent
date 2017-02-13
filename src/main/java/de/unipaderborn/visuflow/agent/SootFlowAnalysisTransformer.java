@@ -57,12 +57,13 @@ public class SootFlowAnalysisTransformer implements ClassFileTransformer {
 
 	private void enhance(CtClass c) throws NotFoundException, CannotCompileException {
 		CtMethod flowThrough = c.getDeclaredMethod("flowThrough");
-		CtClass jsonObject = pool.get("org.json.JSONObject");
-		flowThrough.addLocalVariable("json", jsonObject);
-		flowThrough.insertAfter("json = new org.json.JSONObject();");
-		flowThrough.insertAfter("json.put(\"unit\", new String($2.getTag(\"Fully Qualified Name\").getValue()));");
-		flowThrough.insertAfter("json.put(\"in\", $1.toString());");
-		flowThrough.insertAfter("json.put(\"out\", $3.toString());");
-		flowThrough.insertAfter("de.unipaderborn.visuflow.agent.MonitorClient.getInstance().sendAsync(json.toString());");
+		CtClass string = pool.get("java.lang.String");
+		flowThrough.addLocalVariable("fqn", string);
+		flowThrough.addLocalVariable("in", string);
+		flowThrough.addLocalVariable("out", string);
+		flowThrough.insertAfter("fqn= new String($2.getTag(\"Fully Qualified Name\").getValue());");
+		flowThrough.insertAfter("in = $1.toString();");
+		flowThrough.insertAfter("out = $3.toString();");
+		flowThrough.insertAfter("de.unipaderborn.visuflow.agent.MonitorClient.getInstance().sendAsync(fqn, in, out);");
 	}
 }

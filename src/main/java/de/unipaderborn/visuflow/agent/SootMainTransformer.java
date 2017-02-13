@@ -9,6 +9,14 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 
+/**
+ * This transformer enhances the main method of Soot. It adds
+ * code to open a TCP connection to the plug-in, which we use to
+ * transfer the current in-sets and out-sets of the analysis.
+ *
+ * @author henni@upb.de
+ *
+ */
 public class SootMainTransformer implements ClassFileTransformer {
 
 	private ClassPool pool;
@@ -21,6 +29,7 @@ public class SootMainTransformer implements ClassFileTransformer {
 	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer)
 			throws IllegalClassFormatException {
 
+		// find the Soot Main class
 		if(className.equals("soot/Main")) {
 			try {
 				pool.insertClassPath(new ByteArrayClassPath(className, classfileBuffer));

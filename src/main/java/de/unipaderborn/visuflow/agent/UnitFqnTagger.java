@@ -43,6 +43,7 @@ public class UnitFqnTagger implements ClassFileTransformer {
 				fqnTag.addField(new CtField(pool.get("java.lang.String"), "fqn", fqnTag));
 				fqnTag.addConstructor(CtNewConstructor.make("public FqnTag(String fqn) { this.fqn = fqn; }", fqnTag));
 				fqnTag.addMethod(CtNewMethod.make("public String getName() { return \"Fully Qualified Name\"; }", fqnTag));
+				fqnTag.addMethod(CtNewMethod.make("public String toString() { return \"Fully Qualified Name: \" + this.fqn; }", fqnTag));
 				fqnTag.addMethod(CtNewMethod.make("public byte[] getValue() throws soot.tagkit.AttributeValueException { return fqn.getBytes(); }", fqnTag));
 				fqnTag.toClass();
 
