@@ -37,6 +37,7 @@ public class SootMainTransformer implements ClassFileTransformer {
 				CtMethod main = cclass.getDeclaredMethod("main");
 				main.insertBefore("de.unipaderborn.visuflow.agent.MonitorClient.getInstance().connect();");
 				main.insertBefore("de.unipaderborn.visuflow.agent.MonitorClient.getInstance().start();");
+				main.insertAfter("de.unipaderborn.visuflow.agent.MonitorClient.getInstance().close();");
 
 				if (!cclass.isFrozen()) {
 					return cclass.toBytecode();
