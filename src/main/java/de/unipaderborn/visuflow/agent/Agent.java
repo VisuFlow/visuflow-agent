@@ -25,5 +25,6 @@ public class Agent {
 		inst.addTransformer(new SootMainTransformer(), true);
 		inst.addTransformer(new UnitFqnTagger(), true);
 		inst.addTransformer(new SootFlowAnalysisTransformer(), true);
+		inst.addTransformer(new HerosIdeTarnsformer(), true);
 	}
 }
